@@ -1,10 +1,12 @@
 import pygame
 import random
+import time
 from c import *
 from w import *
 gameDisplay = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption('Wumpus World AI by sushrut')
 clock = pygame.time.Clock()
+timeLast = pygame.time.get_ticks()
 
 #define empty space
 emptyBox = pygame.Surface((x,y))
@@ -93,25 +95,27 @@ w_x = 0
 w_y = y*3
 
 while True:
-	seed_x = random.randint(0,3)
-	seed_y = random.randint(0,3)
+	#seed_x = random.randint(0,3)
+	#seed_y = random.randint(0,3)
+	seed_x = 2
+	seed_y = 2
 	wu_x = seed_x
 	wu_y = seed_y
 	w_x = x*seed_x
 	w_y = y*seed_y
 	
-	if(seed_x != 0 and seed_y != 3):
-		grid[seed_x][seed_y].wumpus = True
-		grid[seed_x][seed_y].blank = False
-		if seed_x!=0: 
-			grid[seed_x-1][seed_y].scream = True
-		if seed_x!=3:
-			grid[seed_x+1][seed_y].scream = True
-		if seed_y!=0:
-			grid[seed_x][seed_y-1].scream = True
-		if seed_y!=3:
-			grid[seed_x][seed_y+1].scream = True
-		break
+#if(seed_x != 0 and seed_y != 3) and (seed_x != 0 and seed_y != 2) and (seed_x != 1 and seed_y != 3) and grid[seed_x][seed_y].blank == True:
+	grid[seed_x][seed_y].wumpus = True
+	grid[seed_x][seed_y].blank = False
+	if seed_x!=0: 
+		grid[seed_x-1][seed_y].scream = True
+	if seed_x!=3:
+		grid[seed_x+1][seed_y].scream = True
+	if seed_y!=0:
+		grid[seed_x][seed_y-1].scream = True
+	if seed_y!=3:
+		grid[seed_x][seed_y+1].scream = True
+	break
 gameDisplay.blit(wumpusImg, (w_x,w_y))
 	
 #Create pit 1
@@ -126,9 +130,9 @@ while True:
 	pit_y1 = y*seed_y
 
 	if grid[seed_x][seed_y].blank:
-		if seed_x == 0 and seed_y == 2 and (grid[1][3].blank!= True or grid[1][3].gold!= True) :
+		if seed_x == 0 and seed_y == 2:
 			continue
-		if seed_x == 1 and seed_y == 3 and (grid[0][2].blank!= True or grid[0][2].gold!= True) :
+		if seed_x == 1 and seed_y == 3:
 			continue	
 		grid[seed_x][seed_y].pit = True
 		grid[seed_x][seed_y].blank = False
@@ -187,6 +191,64 @@ gameDisplay.blit(pitImg, (pit_x2,pit_y2))
 x_ch = 0
 y_ch = 0
 
+def delay():
+	global timeLast
+	while True:
+		if pygame.time.get_ticks() - timeLast >= timeDelay:
+			timeLast = pygame.time.get_ticks()
+			return
+
+def move(direction):
+	global x_ch, y_ch, player_y, player_x, a_x, a_y, timeLast
+	drawGrid(x,y)
+	pygame.display.update()
+	delay()
+
+	if direction == "right":
+		
+		if player_x != x*3:
+			x_ch = x
+			player(player_x+x_ch,player_y+y_ch)
+			gameDisplay.blit(emptyBox, (player_x,player_y))
+			player_x = player_x+x_ch
+			player_y = player_y+y_ch
+			x_ch = 0
+			y_ch = 0
+			a_x = a_x+1	 
+	elif direction == "left":
+		
+		if player_x != 0:
+			x_ch = -x
+			player(player_x+x_ch,player_y+y_ch)
+			gameDisplay.blit(emptyBox, (player_x,player_y))
+			player_x = player_x+x_ch
+			player_y = player_y+y_ch
+			x_ch = 0
+			y_ch = 0
+			a_x = a_x-1
+	elif direction == "up":
+		
+		if player_y != 0:
+			y_ch = -y
+			player(player_x+x_ch,player_y+y_ch)
+			gameDisplay.blit(emptyBox, (player_x,player_y))
+			player_x = player_x+x_ch
+			player_y = player_y+y_ch
+			x_ch = 0
+			y_ch = 0
+			a_y = a_y -1
+	elif direction == "down":
+		
+		if player_y != y*3:
+			y_ch = y
+			player(player_x+x_ch,player_y+y_ch)
+			gameDisplay.blit(emptyBox, (player_x,player_y))
+			player_x = player_x+x_ch
+			player_y = player_y+y_ch
+			x_ch = 0
+			y_ch = 0
+			a_y = a_y+1
+
 def moveRight():
 	global x_ch, y_ch, player_y, player_x, a_x, a_y
 	if player_x != x*3:
@@ -236,9 +298,13 @@ def moveDown():
 		a_y = a_y+1
 
 def shoot(direction):
+	global timeLast
 	if agent.arrow == False:
 		print("Out of arrows!")
 		return
+	drawGrid(x,y)
+	pygame.display.update()
+	delay()
 	agent.arrow = False
 	if direction == "right" and a_x !=3 :
 		if grid[a_x+1][a_y].wumpus:
@@ -341,49 +407,102 @@ def shoot(direction):
 					grid[a_x][a_y+1].breeze = True
 				if grid[a_x+1][a_y+1].gold:
 					grid[a_x][a_y+1].glitter = True
+	drawGrid(x,y)
+	pygame.display.update()
 
+#=====AGENT AI=====#
+
+def oppositeDirection(direction):
+	if direction == "right":
+		return "left"
+	if direction == "left":
+		return "right"
+	if direction == "up":
+		return "down"
+	if direction == "down":
+		return "up"
 
 #====GAMEPLAY EVENT HANDLING====#
 
 while not crashed:
+	drawGrid(x,y)
+	for event in pygame.event.get():
+	    if event.type == pygame.QUIT:
+	        crashed = True
+	if startFlag == 0:
+		startFlag = 1
+		pgrid[a_x][a_y] = grid[a_x][a_y]
+		visited[a_x][a_y] = 1
+		while not (grid[a_x][a_y].breeze or grid[a_x][a_y].scream or a_x==3):
+			pygame.display.update()
+			move(right)
+			if grid[a_x][a_y].gold == True and goldFlag!=1:
+				goldFlag = 1
+				agent.gold = True
+				print("Gold Collected!")
+			if grid[a_x][a_y] == start and agent.gold == True:
+				print("You Won!")
+				pygame.quit()
+				quit()
+			if grid[a_x][a_y].wumpus == True or grid[a_x][a_y].pit == True :
+				print ("Game Over!")
+				pygame.quit()
+				quit()
+			pgrid[a_x][a_y] = grid[a_x][a_y]
+			visited[a_x][a_y] = 1
+			lastDirection = right
+			tempDirection = lastDirection
+			drawGrid(x,y)
+		continue
+	if pgrid[a_x][a_y].scream:
+		tempDirection = lastDirection
+		move(oppositeDirection(lastDirection))
+		lastDirection = oppositeDirection(lastDirection)
+		if grid[a_x][a_y].gold == True and goldFlag!=1:
+			goldFlag = 1
+			agent.gold = True
+			print("Gold Collected!")
+		if grid[a_x][a_y] == start and agent.gold == True:
+			print("You Won!")
+			pygame.quit()
+			quit()
+		if grid[a_x][a_y].wumpus == True or grid[a_x][a_y].pit == True :
+			print ("Game Over!")
+			pygame.quit()
+			quit()
+		pgrid[a_x][a_y] = grid[a_x][a_y]
+		visited[a_x][a_y] = 1
+		drawGrid(x,y)
+		if a_y == 3:
+			move(up)
+			pgrid[a_x][a_y] = grid[a_x][a_y]
+			visited[a_x][a_y] = 1
+			if pgrid[a_x][a_y].scream:
+				shoot(tempDirection)
+		elif a_y == 0:
+			move(down)
+			pgrid[a_x][a_y] = grid[a_x][a_y]
+			visited[a_x][a_y] = 1
+			if pgrid[a_x][a_y].scream:
+				shoot(tempDirection)
+	
+	if grid[a_x][a_y].gold == True and goldFlag!=1:
+		goldFlag = 1
+		agent.gold = True
+		print("Gold Collected!")
+	if grid[a_x][a_y] == start and agent.gold == True:
+		print("You Won!")
+		break
+	if grid[a_x][a_y].wumpus == True or grid[a_x][a_y].pit == True :
+		print ("Game Over!")
+		break
+	drawGrid(x,y)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            crashed = True
-
-        if event.type == pygame.KEYDOWN:
-        	if event.key == pygame.K_RIGHT:
-        		moveRight()
-        	if event.key == pygame.K_LEFT:
-        		moveLeft()
-        	if event.key == pygame.K_UP:
-        		moveUp()
-        	if event.key == pygame.K_DOWN:
-        		moveDown()
-        	if event.key == pygame.K_w:
-        		shoot("up")
-        	if event.key == pygame.K_s:
-        		shoot("down")
-        	if event.key == pygame.K_a:
-        		shoot("left")
-        	if event.key == pygame.K_d:
-        		shoot("right")
-    if grid[a_x][a_y].gold == True and goldFlag!=1:
-    	goldFlag = 1
-    	agent.gold = True
-    	print("Gold Collected!")
-    if grid[a_x][a_y] == start and agent.gold == True:
-    	print("You Won!")
-    	break
-    if grid[a_x][a_y].wumpus == True or grid[a_x][a_y].pit == True :
-    	print ("Game Over!")
-    	break
-    drawGrid(x,y)
-    pygame.display.update()
-    clock.tick(60)
+	pygame.display.update()
+	clock.tick(60)
 pygame.quit()
 quit()
 
 
-#=====AGENT AI=====#
+
 

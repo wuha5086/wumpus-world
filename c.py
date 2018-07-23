@@ -37,6 +37,14 @@ y_2 = y*2
 y_3 = y*3
 
 goldFlag = 0
+startFlag = 0
+timeDelay = 1000
+lastDirection = "right"
+right = "right"
+left = "left"
+down = "down"
+up = "up"
+tempDirection = ""
 
 
 

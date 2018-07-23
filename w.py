@@ -14,6 +14,11 @@ class Block:
 		self.blank = True
 
 grid = [[Block() for j in range(4)] for i in range(4)]
+
+pgrid = [[Block() for j in range(4)] for i in range(4)]
+
+visited = [[0 for j in range(4)] for i in range(4)]
+
 class Player:
 	def __init__(self):
 		self.arrow = True
